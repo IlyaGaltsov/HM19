@@ -21,12 +21,12 @@ function showCategories() {
 
       const categoryProducts = categories[categoryKey].products;
       showProducts(categoryProducts, categoryKey);
+
     });
 
     parentElement.appendChild(element);
   }
 }
-
 
 function showProducts(products, category) {
   const parentElement = document.getElementById('center');
@@ -39,13 +39,16 @@ function showProducts(products, category) {
     element.setAttribute('data-category', category);
 
     parentElement.appendChild(element);
+    element.addEventListener('click', () => {
+      showDescription(product);
+    })
   }
-  element.addEventListener('click', () => {
-    showDescription(product);
-  })
 }
 
 showCategories(); 
+
+let selectedProductInfo = '';
+let selectedProductPrice = 0
 
 function showDescription(product) {
   const description = document.getElementById('right');
@@ -54,25 +57,117 @@ function showDescription(product) {
   const element = document.createElement('div');
   const buy = document.createElement('button');
 
+  selectedProductPrice = product.price;
+
   element.textContent = `${product.description}`;
 
-  buy.textContent='Купить';
+  buy.textContent = 'Купить';
 
   description.appendChild(element);
   description.appendChild(buy);
 
-  buy.addEventListener('click', showMessage) ;
-
+  buy.addEventListener('click', showForm);
+  selectedProductInfo = `
+    <h2>Выбранный товар:</h2>
+    <p>Наименование: ${product.name}</p>
+    <p>Цена: $${product.price}</p>
+    <p>Описание: ${product.description}</p>
+  `;
 }
 
-function showMessage(){
-  const message = document.createElement('h2');
-  message.textContent = 'Дякую! Ваш товар успiшно куплено';
-  message.style.textAlign = 'center';
-  document.body.appendChild(message);
+function showForm(){
+  const form = document.querySelector('.form');
+  form.style.display = 'block';
+} 
+
+function getForm() {
+  const form = document.forms.order;
+  const name = form.elements.name.value;
+  const city = form.elements.city.value;
+  const post = form.elements.post.value;
+  const payment = form.elements.payment.value;
+  const amount = form.elements.amount.value;
+  const comment = form.elements.comment.value;
+  const errorContainer = document.querySelector('.error-container');
+ 
+  const order = {
+    name: name,
+    city:  city,
+    post: post,
+    payment: payment,
+    amount: amount,
+    comment: comment,
+    errorContainer: errorContainer
+  }
+  return order;
+}
+
+function isValidate(){
+  const order = getForm();
+  const { name, city, post, payment, amount, comment, errorContainer } = order;
+
+  errorContainer.textContent = '';
+  
+  if (name.trim() === '') {
+    errorContainer.textContent += 'Введите корректные данные для имени фамилии отчества.\n';
+  } else if (!isNaN(name)) {
+    errorContainer.textContent += 'Имя не может быть числом.\n';
+  } else if (name.length < 10 || name.length > 50) {
+    errorContainer.textContent += 'Имя фамилия отчество должно содержать от 10 до 50 символов.\n';
+  }
+  
+  if (post.trim() === '') {
+    errorContainer.textContent += 'Введите корректные данные для почтового индекса.\n';
+  }
+  
+  if (!payment) {
+    errorContainer.textContent += 'Выберите способ оплаты.\n';
+  }
+  
+  if (amount === '') {
+    errorContainer.textContent += 'Выберите количество.\n';
+  } else {
+    const quantity = parseInt(amount);
+
+    if (!isNaN(quantity) && quantity > 0) {
+      return true;
+    } else {
+      errorContainer.textContent += 'Введите корректное количество (целое положительное число).\n';
+    }
+  }
+  
+  return false;
+}
+
+function addInfoOrder() {
+  const isValid = isValidate();
+
+  if (isValid) {
+    const order = getForm();
+    const { name, city, post, payment, amount, comment } = order;
+    const quantity = parseInt(amount);
+    const totalPrice = selectedProductPrice * quantity;
+    const resultContainer = document.querySelector('.result-container');
+    resultContainer.style.display = 'block';
+    resultContainer.innerHTML = `
+      ${selectedProductInfo}
+      <h2>Ваши данные:</h2>
+      <p>Имя: ${name}</p>
+      <p>Город: ${city}</p>
+      <p>Почтовый индекс: ${post}</p>
+      <p>Способ оплаты: ${payment}</p>
+      <p>Количество: ${quantity}</p>
+      <p>Комментарий: ${comment}</p>
+      <p>К оплате: $${totalPrice.toFixed(2)}</p>
+    `;
+    
+    const form = document.forms.order;
+    form.style.display = 'none';
+  }
 }
 
 document.getElementById('left').addEventListener('click', event => {
+  document.querySelector('.result-container').innerHTML ='';
   if (event.target.nodeName === 'DIV') {
     const categoryKey = event.target.getAttribute('data-category');
     const categoryProducts = categories[categoryKey].products;
@@ -90,3 +185,5 @@ document.getElementById('center').addEventListener('click', event => {
     showDescription(product);
   }
 });
+
+document.querySelector('.save').addEventListener('click', addInfoOrder)

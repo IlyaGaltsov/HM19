@@ -8,3 +8,9 @@
   border: 1px solid black;
   min-height: 100px;
 }
+.form{
+  display: none;
+}
+.result-container{
+  display: none;
+}
